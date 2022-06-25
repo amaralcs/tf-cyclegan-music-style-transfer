@@ -136,7 +136,7 @@ def get_run_logdir(
     """
     run_id = time.strftime("run_%Y_%m_%d-%H_%M_%S")
     model_info = "{}2{}_{}e_bs{}_nr{}_ts{}_sd{}_{}".format(
-        genre_a, genre_b, epochs, batch_size, sigma_d, note_range, n_timesteps, run_id
+        genre_a, genre_b, epochs, batch_size, note_range, n_timesteps, sigma_d, run_id
     )
     return os.path.join(root_logdir, model_info), model_info
 
