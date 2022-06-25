@@ -1,0 +1,7 @@
+.vscode/
+data/
+processed_midi/
+samples/
+train_logs/
+trained_models/
+__pycache__/

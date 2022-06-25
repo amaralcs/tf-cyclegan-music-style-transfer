@@ -1,0 +1,17 @@
+name : cyclegan
+channels : 
+  - defaults
+  - conda-forge
+dependencies:
+  - tensorflow-gpu==2.6.0
+  - keras-gpu==2.6.0
+  - tensorflow-estimator==2.6.0
+  - matplotlib==3.5.0
+  - numpy==1.21.2
+  - pretty_midi==0.2.9
+  - ipykernel
+  - black
+  - jupyterthemes # Optional
+  - pyyaml
+  # - pypianoroll==1.0.4 # Not available on conda must be installed via pip
+  

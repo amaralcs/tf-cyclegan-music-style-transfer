@@ -1,0 +1,8 @@
+CycleGAN:
+    pitch_range: 84                  # pitch range of piano roll
+    n_timesteps: 64                  # number of time steps in piano roll
+    n_units_discriminator: 64        # of discriminator filters in first conv layer
+    n_units_generator: 64            # of generator filters in first conv layer
+    l1_lambda: 10.0                  # weight on L1 term in objective
+    gamma: 1.0                       # weight of extra discriminators
+    sigma_d: 0.01                    # sigma of gaussian noise of discriminators
