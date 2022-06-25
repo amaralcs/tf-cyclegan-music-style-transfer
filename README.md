@@ -8,6 +8,9 @@ Original repo: https://github.com/sumuzhao/CycleGAN-Music-Style-Transfer-Refacto
 # Usage
 
 
+## Obtaining the data:
+TODO
+
 ## Preparing the data
 To prep the data, place a folder in this directory and create subdirectories labelled according to the genre of of music present in each subdirectory. Example:
 ```

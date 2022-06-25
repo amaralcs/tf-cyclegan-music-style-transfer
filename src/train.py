@@ -202,8 +202,8 @@ def main(argv):
     log_dir = args.log_dir
 
     # debug path
-    path_a = "data/JC_C_cp/tfrecord"  # dummy dir with less data
-    path_b = "data/JC_J_cp/tfrecord"
+    # path_a = "data/JC_C_cp/tfrecord"  # dummy dir with less data
+    # path_b = "data/JC_J_cp/tfrecord"
 
     learning_rate = args.learning_rate
     step = args.lr_step
