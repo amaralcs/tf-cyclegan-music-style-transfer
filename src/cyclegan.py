@@ -17,7 +17,6 @@ class CycleGAN(Model):
         n_units_discriminator=64,
         n_units_generator=64,
         l1_lambda=10.0,
-        gamma=1.0,
         sigma_d=0.01,
         initializer=tf.random_normal_initializer(0, 0.02),
         **kwargs,
@@ -30,7 +29,6 @@ class CycleGAN(Model):
         self.n_units_discriminator = n_units_discriminator
         self.n_units_generator = n_units_generator
         self.l1_lambda = l1_lambda
-        self.gamma = gamma
         self.sigma_d = sigma_d
         self.initializer = initializer
 
@@ -87,7 +85,6 @@ class CycleGAN(Model):
             "n_units_discriminator": self.n_units_discriminator,
             "n_units_generator": self.n_units_generator,
             "l1_lambda": self.l1_lambda,
-            "gamma": self.gamma,
             "sigma_d": self.sigma_d,
             "initializer": self.initializer,
             "d_loss_generated": self.d_loss_generated,

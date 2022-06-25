@@ -106,7 +106,9 @@ def lr_function_wrapper(lr, epochs, step):
     return variable_lr
 
 
-def get_run_logdir(root_logdir, genre_a, genre_b, epochs, batch_size):
+def get_run_logdir(
+    root_logdir, genre_a, genre_b, epochs, batch_size, sigma_d, note_range, n_timesteps
+):
     """Generates the paths where the logs for this run will be saved.
 
     Parameters
@@ -121,20 +123,36 @@ def get_run_logdir(root_logdir, genre_a, genre_b, epochs, batch_size):
         Number of epochs the model will be trained for.
     batch_size : int
         The batch size used.
-
+    sigma_d : float
+        The amount of Gaussian noise to add to the discriminator
+    note_range : int
+        The note range used.
+    n_timesteps : float
+        Number of timesteps in each phrase.
     Returns
     -------
     str, str
         The full path to the logging directory as well as the name of the current run.
     """
     run_id = time.strftime("run_%Y_%m_%d-%H_%M_%S")
-    model_info = "{}2{}_{}e_bs{}_{}".format(
-        genre_a, genre_b, epochs, batch_size, run_id
+    model_info = "{}2{}_{}e_bs{}_nr{}_ts{}_sd{}_{}".format(
+        genre_a, genre_b, epochs, batch_size, sigma_d, run_id
     )
     return os.path.join(root_logdir, model_info), model_info
 
 
-def setup(log_dir, genre_a, genre_b, epochs, batch_size, learning_rate, step):
+def setup(
+    log_dir,
+    genre_a,
+    genre_b,
+    epochs,
+    batch_size,
+    learning_rate,
+    step,
+    sigma_d,
+    note_range,
+    n_timesteps,
+):
     """Creates the logging info, model name and defines the callbacks
 
     Parameters
@@ -153,6 +171,12 @@ def setup(log_dir, genre_a, genre_b, epochs, batch_size, learning_rate, step):
         The model initial learning rate.
     step : int
         Number of epochs before start decreasing the learning rate.
+    sigma_d : float
+        The amount of Gaussian noise to add to the discriminator
+    note_range : int
+        The note range used.
+    n_timesteps : float
+        Number of timesteps in each phrase.
 
     Returns
     -------
@@ -162,7 +186,7 @@ def setup(log_dir, genre_a, genre_b, epochs, batch_size, learning_rate, step):
         Callbacks to use during training.
     """
     run_logdir, model_info = get_run_logdir(
-        log_dir, genre_a, genre_b, epochs, batch_size
+        log_dir, genre_a, genre_b, epochs, batch_size, sigma_d, note_range, n_timesteps
     )
     file_writer = tf.summary.create_file_writer(run_logdir + "/metrics")
     file_writer.set_as_default()
@@ -228,12 +252,24 @@ def main(argv):
     )
 
     # Setup monitoring and callbacks
+    model_config = load_config(config_path)
+    sigma_d = model_config["sigma_d"]
+    note_range = model_config["note_range"]
+    n_timesteps = model_config["n_timesteps"]
     model_info, callbacks = setup(
-        log_dir, genre_a, genre_b, epochs, batch_size, learning_rate, step
+        log_dir,
+        genre_a,
+        genre_b,
+        epochs,
+        batch_size,
+        learning_rate,
+        step,
+        sigma_d,
+        note_range,
+        n_timesteps,
     )
 
     # Setup model
-    model_config = load_config(config_path)
     model = CycleGAN(genre_a, genre_b, **model_config)
     model.build_model(default_init=optimizer_params)
 
