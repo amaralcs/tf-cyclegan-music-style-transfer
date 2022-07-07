@@ -63,11 +63,11 @@ def main(argv):
     set_type = args.set_type
 
     # debug args
-    path_a = "data/JC_C_cp/tfrecord"  # dummy dir with less data
-    path_b = "data/JC_J_cp/tfrecord"
-    model_path = "trained_models"
-    model_name = "classic2jazz_15e_bs32_run_2022_06_22-20_08_16"
-    model_fpath = os.path.join(os.getcwd(), model_path, model_name, "weights", "")
+    # path_a = "data/JC_C_cp/tfrecord"  # dummy dir with less data
+    # path_b = "data/JC_J_cp/tfrecord"
+    # model_path = "trained_models"
+    # model_name = "classic2jazz_15e_bs32_run_2022_06_22-20_08_16"
+    # model_fpath = os.path.join(os.getcwd(), model_path, model_name, "weights", "")
 
     # TODO: Handle this a bit more cleanly
     genre_a = path_a.split("/")[1]
