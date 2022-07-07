@@ -435,7 +435,7 @@ class CycleGAN(Model):
             original = X_a
             transfer = self.generator_A2B(X_a)
             cycle = self.generator_B2A(transfer)
-        elif direction == "A2B":
+        elif direction == "B2A":
             original = X_b
             transfer = self.generator_B2A(X_b)
             cycle = self.generator_B2A(transfer)

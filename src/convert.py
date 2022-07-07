@@ -84,18 +84,19 @@ def main(argv):
     model.load_weights(model_fpath)
     logger.debug(f"\tsuccess!")
 
-    outpath = f"converted/{model_name}"
+    outpath = f"converted/{model_name}/{direction}"
     os.makedirs(outpath, exist_ok=True)
     logger.debug(f"Converting and saving results to {outpath}")
+
+    idx = 0
     for batch in dataset:
         original_inputs, converted, cycled = model(batch, direction=direction)
 
-        for idx, (original, transfer, cycle) in enumerate(
-            zip(original_inputs, converted, cycled)
-        ):
+        for (original, transfer, cycle) in zip(original_inputs, converted, cycled):
             save_midis(original[newaxis, ...], f"{outpath}/{idx}_original.mid")
             save_midis(transfer[newaxis, ...], f"{outpath}/{idx}_transfer.mid")
             save_midis(cycle[newaxis, ...], f"{outpath}/{idx}_cycle.mid")
+            idx += 1
 
 
 if __name__ == "__main__":

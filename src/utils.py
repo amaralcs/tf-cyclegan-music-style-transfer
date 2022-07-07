@@ -262,10 +262,6 @@ def join_datasets(
     -------
     tf.data.Dataset
 
-    Note
-    ----
-    I don't think I need batching here, but I can include it
-    if I use `tf.data.Dataset.bucket_by_sequence_length`.
     """
     logger.info("Joining datasets")
     ds = tf.data.Dataset.zip((dataset_a, dataset_b))
