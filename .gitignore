@@ -5,3 +5,4 @@ samples/
 train_logs/
 trained_models/
 __pycache__/
+converted/
