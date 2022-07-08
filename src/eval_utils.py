@@ -255,6 +255,60 @@ def time_pitch_diff_hist(
     return np.nan_to_num(histogram)
 
 
+def onset_duration_hist(
+    sequences, bar_duration=4, max_value=2, bin_size=1 / 6, normed=True
+):
+    """Compute an onset-duration histogram.
+
+    The x-axis of the histogram contains the note durations while the y-axis contains the
+    position of the note onset relative to the beat (considering the given `bar_duration`).
+
+    Parameters
+    ----------
+    sequences : List[List[pretty_midi.Note]]
+        A list of notes for each instrument.
+    bar_duration : int
+        The number of beats per bar.
+    max_value : int
+        The maximum distance between an onset and offset.
+    bin_size : float
+        The bin size along the time axis.
+    normed : bool
+        Whether to normalize the histogram.
+
+    Returns
+    -------
+    np.array
+        A 2D histogram of shape `[bar_duration / bin_size, max_value / bin_size]`.
+
+    Notes
+    -----
+    This implementation does not support sequences with more than 1 track. Note that the inputs
+    to `histogram2D` take only the first entry of the lists. For a more complete implementation one may
+    want to explore using `np.histogramdd`.
+    """
+    epsilon = 1e-9
+    onsets = []
+    durations = []
+    for notes in sequences:
+        note_onsets = [n.start % bar_duration for n in notes]
+        note_durations = [n.end - n.start for n in notes]
+
+        onsets.append(note_onsets)
+        durations.append(note_durations)
+
+    histogram, _, _ = np.histogram2d(
+        onsets[0],
+        durations[0],
+        normed=normed,
+        bins=[
+            np.arange(0.0, bar_duration + bin_size - epsilon, bin_size),
+            np.arange(0.0, max_value + bin_size - epsilon, bin_size),
+        ],
+    )
+    return np.nan_to_num(histogram)
+
+
 def gen_histograms(sequences, hist_kwargs, func):
     """Helper function to compute the time_pitch histogram of a given sequence of songs.
 
