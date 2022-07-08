@@ -348,9 +348,8 @@ class CycleGAN(Model):
             X_a_transfer = self.generator_A2B(X_a, training=True)
             X_a_cycle = self.generator_B2A(X_a_transfer, training=True)
 
-            X_b_transfer = self.generator_B2A(
-                X_b, training=True
-            )  # X_b in the style of X_a
+            # X_b in the style of X_a
+            X_b_transfer = self.generator_B2A(X_b, training=True)
             X_b_cycle = self.generator_A2B(X_b_transfer, training=True)
 
             # discriminator evaluation
@@ -438,7 +437,7 @@ class CycleGAN(Model):
         elif direction == "B2A":
             original = X_b
             transfer = self.generator_B2A(X_b)
-            cycle = self.generator_B2A(transfer)
+            cycle = self.generator_A2B(transfer)
         else:
             raise Exception(f"Transfer direction '{direction}' not understood")
 
