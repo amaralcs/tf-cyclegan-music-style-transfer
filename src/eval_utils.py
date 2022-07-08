@@ -309,15 +309,17 @@ def onset_duration_hist(
     return np.nan_to_num(histogram)
 
 
-def gen_histograms(sequences, hist_kwargs, func):
+def gen_histograms(sequences, hist_func, **kwargs):
     """Helper function to compute the time_pitch histogram of a given sequence of songs.
 
     Parameters
     ----------
     sequences : List[prettymidi.PrettyMIDI]
         Input songs.
-    hist_kwargs : dict
-        Keyword arguments to pass to `time_pitch_diff_hist`.
+    hist_func : function
+        Histogram metric to compute. One of (`time_pitch_diff_hist`. `onset_duration_hist`)
+    kwargs :
+        Keyword arguments to pass to `metric_func`.
 
     Returns
     -------
@@ -327,14 +329,14 @@ def gen_histograms(sequences, hist_kwargs, func):
     hists = []
     for sequence in sequences:
         notes = [note for instr in sequence.instruments for note in instr.notes]
-        hists.append(time_pitch_diff_hist([notes], **hist_kwargs))
+        hists.append(hist_func([notes], **kwargs))
     return np.array(hists)
 
 
 def eval_style_similarities(histograms, ref_histogram):
     """Computes the cosine similarity between a list of input histograms and a reference histogram.
 
-    Histograms should are computed using `time_pitch_diff_hist` and `ref_histogram` should be an
+    Histograms are computed using `gen_histogram`, `ref_histogram` should be an
     average of all histograms computed for a given genre.
 
     Parameters
