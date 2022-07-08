@@ -8,6 +8,8 @@ import logging
 from eval_utils import (
     eval_chroma_similarities,
     gen_histograms,
+    time_pitch_diff_hist,
+    onset_duration_hist,
     eval_style_similarities,
 )
 
@@ -49,14 +51,82 @@ def load_converted_songs(fpaths):
     original_songs = [pretty_midi.PrettyMIDI(filepath) for filepath in original_fpaths]
     transfer_songs = [pretty_midi.PrettyMIDI(filepath) for filepath in transfer_fpaths]
 
-    return original_songs, transfer_songs
+    return (original_songs, transfer_songs)
+
+
+def compute_style_metric(
+    name,
+    tup_a,
+    tup_b,
+    hist_func,
+    genre_a,
+    genre_b,
+    **kwargs,
+):
+    """
+
+    Parameters
+    ----------
+    name : str
+        Name of the metric calculation, to be used when writing the results.
+        Input songs.
+    tup_a : tuple(list[pretty_midi.PrettyMIDI], list[pretty_midi.PrettyMIDI])
+        Tuple containing the original songs in style A and the songs transferred to style B.
+    tup_b : tuple(list[pretty_midi.PrettyMIDI], list[pretty_midi.PrettyMIDI])
+        Tuple containing the original songs in style B and the songs transferred to style A.
+    hist_func : function
+        Histogram metric to compute. One of (`time_pitch_diff_hist`. `onset_duration_hist`)
+    genre_a : str
+        Name of genre A.
+    genre_b : str
+        Name of genre B.
+    kwargs :
+        Keyword arguments to pass to `metric_func`.
+
+    Returns
+    -------
+    List[np.array]
+        The computes time-pitch histograms for each input song.
+    """
+    inputs_a, a_transfer_b = tup_a
+    inputs_b, b_transfer_a = tup_b
+
+    histograms_a = gen_histograms(inputs_a, hist_func=hist_func, **kwargs)
+    histograms_a2b = gen_histograms(a_transfer_b, hist_func=hist_func, **kwargs)
+    a_reference_hist = histograms_a.mean(axis=0)
+    a2b_reference_hist = histograms_a2b.mean(axis=0)
+
+    histograms_b = gen_histograms(inputs_b, hist_func=hist_func, **kwargs)
+    histograms_b2a = gen_histograms(b_transfer_a, hist_func=hist_func, **kwargs)
+    b_reference_hist = histograms_b.mean(axis=0)
+    b2a_reference_hist = histograms_b2a.mean(axis=0)
+
+    results = {
+        f"macro_{name}": {
+            f"{genre_a}2{genre_b}": eval_style_similarities(
+                [a2b_reference_hist], b_reference_hist
+            ),
+            f"{genre_b}2{genre_b}": eval_style_similarities(
+                [b2a_reference_hist], a_reference_hist
+            ),
+        },
+        f"per_song_{name}": {
+            f"{genre_a}2{genre_b}": eval_style_similarities(
+                histograms_a2b, b_reference_hist
+            ),
+            f"{genre_b}2{genre_a}": eval_style_similarities(
+                histograms_b2a, a_reference_hist
+            ),
+        },
+    }
+    return results
 
 
 if __name__ == "__main__":
     chroma_args = dict(sampling_rate=12, window_size=24, stride=12, use_velocity=False)
     hist_kwargs = dict(max_time=4, bin_size=1 / 6, normed=True)
 
-    # Debug args
+    # Test args
     base = "converted/{}/{}/*.mid*"
     model = "CP_C2CP_P_30e_bs32_nr84_ts64_sd1_run_2022_06_25-19_24_32"
     pattern_A2B = base.format(model, "A2B")
@@ -67,43 +137,34 @@ if __name__ == "__main__":
     genre_b = "P"
     outpath = f"results/{model}"
 
-    inputs_a, a_transfer_b = load_converted_songs(fpaths_A2B)
-    inputs_b, b_transfer_a = load_converted_songs(fpaths_B2A)
+    tup_a = load_converted_songs(fpaths_A2B)
+    tup_b = load_converted_songs(fpaths_B2A)
 
     logger.info("Computing chroma_similarities...")
     results = {
         "chroma_similarities": {
-            "A2B": eval_chroma_similarities(inputs_a, a_transfer_b, **chroma_args),
-            "B2A": eval_chroma_similarities(inputs_b, b_transfer_a, **chroma_args),
-        },
-        "agg_style_profile": {"A2B": None, "B2A": None},
-        "per_song_style_profile": {"A2B": None, "B2A": None},
+            f"{genre_a}2{genre_b}": eval_chroma_similarities(*tup_a, **chroma_args),
+            f"{genre_b}2{genre_a}": eval_chroma_similarities(*tup_b, **chroma_args),
+        }
     }
 
-    logger.info(f"Computing style histograms")
-    histograms_a = gen_histograms(inputs_a, hist_kwargs)
-    histograms_a2b = gen_histograms(a_transfer_b, hist_kwargs)
-    a_ref_hist = histograms_a.mean(axis=0)
-    a2b_ref_hist = histograms_a2b.mean(axis=0)
+    logger.info(f"Computing time-pitch histograms")
+    time_pitch_results = compute_style_metric(
+        "time_pitch_diff",
+        tup_a,
+        tup_b,
+        time_pitch_diff_hist,
+        genre_a,
+        genre_b,
+        **hist_kwargs,
+    )
+    results.update(time_pitch_results)
 
-    histograms_b = gen_histograms(inputs_b, hist_kwargs)
-    histograms_b2a = gen_histograms(b_transfer_a, hist_kwargs)
-    b_ref_hist = histograms_a.mean(axis=0)
-    b2a_ref_hist = histograms_b2a.mean(axis=0)
-
-    results["agg_style_profile"]["A2B"] = eval_style_similarities(
-        [a2b_ref_hist], b_ref_hist
+    logger.info(f"Computing onset-duration histograms")
+    onset_duration_results = compute_style_metric(
+        "onset_duration", tup_a, tup_b, onset_duration_hist, genre_a, genre_b
     )
-    results["agg_style_profile"]["B2A"] = eval_style_similarities(
-        [b2a_ref_hist], a_ref_hist
-    )
-    results["per_song_style_profile"]["A2B"] = eval_style_similarities(
-        histograms_a2b, b_ref_hist
-    )
-
-    results["per_song_style_profile"]["B2A"] = eval_style_similarities(
-        histograms_b2a, a_ref_hist
-    )
+    results.update(onset_duration_results)
 
     write_output(results, outpath, genre_a, genre_b)
 
