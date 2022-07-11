@@ -1,11 +1,15 @@
 """
-    The following script was adapted from:
+    The following code was adapted from:
         Cífka, O., Şimşekli, U. and Richard, G. (2019) 
         ‘Supervised symbolic music style translation using synthetic data’, in Proceedings of the 20th International Society for Music Information Retrieval Conference, ISMIR 2019. International Society for Music Information Retrieval, pp. 588–595. 
         doi: 10.5281/zenodo.3527878.
+    And
+        Lu, C. and Dubnov, S. (2021) ‘ChordGAN: Symbolic Music Style Transfer with Chroma Feature Extraction’.
 
-    Original implementation:
+    Original implementations:
     https://github.com/cifkao/ismir2019-music-style-translation/tree/master/code/ismir2019_cifka/eval
+    https://github.com/conanlu/Musical-Style-Transfer-with-GANs/blob/master/chroma%20and%20tonnetz%20examples.ipynb
+
 """
 import numpy as np
 import pretty_midi
@@ -360,3 +364,88 @@ def eval_style_similarities(histograms, ref_histogram):
         similarities.append(similarity)
 
     return similarities
+
+
+def tonnetz_dim(x, A=1, w=(7 * np.pi / 6)):
+    """Creates pairs of points corresponding to a Tonnetz.
+
+    Parameters
+    ----------
+    x : np.array
+        Points to evaluate the functions.
+    A : float
+        Amplitude of sine/cosine.
+    w : float
+        Controls the period of sine/cosine.
+    """
+    return np.c_[A * np.sin(x * w), A * np.cos(x * w)]
+
+
+def make_base_tonnetz():
+    """Creates the base Tonnetz graph.
+
+    Returns
+    -------
+    np.array of shape (6, 12)
+    """
+    x = np.arange(12)
+    fifth = tonnetz_dim(x)
+    min_third = tonnetz_dim(x, w=(3 * np.pi / 2))
+    maj_third = tonnetz_dim(x, A=0.5, w=(2 * np.pi / 3))
+
+    tonnetz = np.c_[fifth, min_third, maj_third].T
+    return tonnetz
+
+
+def project_chroma(chroma, tonnetz):
+    """Project a chromagram on the tonnetz.
+
+    Parameters
+    ----------
+    chroma : np.array
+        Chromagram to project.
+    tonnetz : np.array
+        The base tonnetz graph.
+
+    Returns
+    -------
+    np.array
+        Returned value is normalized to prevent numerical instabilities.
+    """
+    if np.sum(np.abs(chroma)) == 0.0:
+        # The input is an empty chord, return zero.
+        return np.zeros(chroma.shape)
+
+    projection = np.dot(tonnetz, chroma)
+    norm = np.sum(np.abs(projection))
+    return projection / norm
+
+
+def tonnetz_distance(chromas_a, chromas_b):
+    """Compute the Tonnetz distance between two chromagrams.
+
+    Parameters
+    ----------
+    chromas_a : List[np.array]
+        The chromas from the first dataset.
+    chromas_b : List[np.array]
+        The chromas from the second dataset.
+
+    Returns
+    -------
+    np.array
+    """
+    base_tonnetz = make_base_tonnetz()
+    distances = []
+    for chroma_a, chroma_b in zip(chromas_a, chromas_b):
+
+        # Make sure the chroma matrices have the same dimensions.
+        if chroma_a.shape[1] < chroma_b.shape[1]:
+            chroma_a, chroma_b = chroma_b, chroma_a
+        pad_size = chroma_a.shape[1] - chroma_b.shape[1]
+        chroma_b = np.pad(chroma_b, [(0, 0), (0, pad_size)], mode="constant")
+
+        tonnetz_a = project_chroma(chroma_a, base_tonnetz)
+        tonnetz_b = project_chroma(chroma_b, base_tonnetz)
+        distances.append(np.linalg.norm(tonnetz_b - tonnetz_a))
+    return distances
