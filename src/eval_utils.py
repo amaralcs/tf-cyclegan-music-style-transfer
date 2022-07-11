@@ -414,7 +414,7 @@ def project_chroma(chroma, tonnetz):
     """
     if np.sum(np.abs(chroma)) == 0.0:
         # The input is an empty chord, return zero.
-        return np.zeros(chroma.shape)
+        return np.zeros((6, chroma.shape[1]))
 
     projection = np.dot(tonnetz, chroma)
     norm = np.sum(np.abs(projection))
