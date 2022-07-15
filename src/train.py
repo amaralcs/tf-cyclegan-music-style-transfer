@@ -7,7 +7,7 @@ from yaml import safe_load, YAMLError
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, LearningRateScheduler
 
-from utils import load_data
+from utils import load_data, gen_random_name
 from cyclegan import CycleGAN
 
 
@@ -109,9 +109,7 @@ def lr_function_wrapper(lr, epochs, step):
     return variable_lr
 
 
-def get_run_logdir(
-    root_logdir, genre_a, genre_b, epochs, batch_size, sigma_d, note_range, n_timesteps
-):
+def get_run_logdir(root_logdir, genre_a, genre_b):
     """Generates the paths where the logs for this run will be saved.
 
     Parameters
@@ -122,25 +120,14 @@ def get_run_logdir(
         The name of genre A.
     genre_b : str
         The name of genre B.
-    epochs : int
-        Number of epochs the model will be trained for.
-    batch_size : int
-        The batch size used.
-    sigma_d : float
-        The amount of Gaussian noise to add to the discriminator
-    note_range : int
-        The note range used.
-    n_timesteps : float
-        Number of timesteps in each phrase.
+
     Returns
     -------
     str, str
         The full path to the logging directory as well as the name of the current run.
     """
-    run_id = time.strftime("run_%Y_%m_%d-%H_%M_%S")
-    model_info = "{}2{}_{}e_bs{}_nr{}_ts{}_sd{}_{}".format(
-        genre_a, genre_b, epochs, batch_size, note_range, n_timesteps, sigma_d, run_id
-    )
+    model_name = gen_random_name()
+    model_info = "{}2{}_{}".format(genre_a, genre_b, model_name)
     return os.path.join(root_logdir, model_info), model_info
 
 
@@ -149,12 +136,8 @@ def setup(
     genre_a,
     genre_b,
     epochs,
-    batch_size,
     learning_rate,
     step,
-    sigma_d,
-    note_range,
-    n_timesteps,
 ):
     """Creates the logging info, model name and defines the callbacks
 
@@ -168,18 +151,10 @@ def setup(
         Name of genre B.
     epochs : int
         Number of epochs to train.
-    batch_size : int
-        Batch size to use for training.
     learning_rate : float
         The model initial learning rate.
     step : int
         Number of epochs before start decreasing the learning rate.
-    sigma_d : float
-        The amount of Gaussian noise to add to the discriminator
-    note_range : int
-        The note range used.
-    n_timesteps : float
-        Number of timesteps in each phrase.
 
     Returns
     -------
@@ -188,9 +163,7 @@ def setup(
     callbacks : List[tf.keras.callbacks]
         Callbacks to use during training.
     """
-    run_logdir, model_info = get_run_logdir(
-        log_dir, genre_a, genre_b, epochs, batch_size, sigma_d, note_range, n_timesteps
-    )
+    run_logdir, model_info = get_run_logdir(log_dir, genre_a, genre_b)
     file_writer = tf.summary.create_file_writer(run_logdir + "/metrics")
     file_writer.set_as_default()
     lr_function = lr_function_wrapper(learning_rate, epochs, step)
@@ -229,8 +202,8 @@ def main(argv):
     log_dir = args.log_dir
 
     # debug path
-    # path_a = "data/JC_C_cp/tfrecord"  # dummy dir with less data
-    # path_b = "data/JC_J_cp/tfrecord"
+    path_a = "../data/cycleGAN/prepared_data/JC_C_cp/tfrecord"  # dummy dir with less data
+    path_b = "data/cycleGAN/prepared_data/JC_J_cp/tfrecord"
 
     learning_rate = args.learning_rate
     step = args.lr_step
@@ -278,6 +251,7 @@ def main(argv):
 
     model.fit(dataset, epochs=epochs, callbacks=callbacks)
     model.save_weights(f"{model_output}/{model_info}/weights/")
+    copy(config_path, f"{model_output}/{model_info}/")
 
 
 if __name__ == "__main__":
