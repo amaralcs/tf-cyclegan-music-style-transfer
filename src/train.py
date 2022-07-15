@@ -126,8 +126,8 @@ def get_run_logdir(root_logdir, genre_a, genre_b):
     str, str
         The full path to the logging directory as well as the name of the current run.
     """
-    model_name = gen_random_name()
-    model_info = "{}2{}_{}".format(genre_a, genre_b, model_name)
+    run_id = time.strftime("run_%Y_%m_%d-%H_%M_%S")
+    model_info = "{}2{}_{}".format(genre_a, genre_b, run_id)
     return os.path.join(root_logdir, model_info), model_info
 
 
