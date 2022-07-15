@@ -37,6 +37,8 @@ logger = logging.getLogger("preprocessing_logger")
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
 
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"  # Suppress tensorflow logs
+
 
 def parse_args(argv):
     """Parses input options for this module.
@@ -495,8 +497,6 @@ def save(trimmed_midis, dataset, outpath, genre, remove_velocity):
         with TFRecordWriter(fname) as writer:
             writer.write(tensor.numpy())
 
-    logger.info(f"[Done]")
-
 
 def main(argv):
     """Main function to run the job."""
@@ -518,8 +518,12 @@ def main(argv):
 
     outpath = os.path.join(root_path, outpath)
 
-    save(train_set, "train", outpath, genre, remove_velocity)
-    save(test_set, "test", outpath, genre, remove_velocity)
+    if len(train_set) > 0:
+        save(train_set, "train", outpath, genre, remove_velocity)
+    if len(test_set) > 0:
+        save(test_set, "test", outpath, genre, remove_velocity)
+
+    logger.info(f"[Done]")
 
 
 if __name__ == "__main__":
