@@ -6,3 +6,7 @@ train_logs/
 trained_models/
 __pycache__/
 converted/
+bodhidharma/
+autoconvert.ps1
+autoeval.ps1
+cyclegan_eval.zip

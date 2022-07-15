@@ -95,9 +95,13 @@ def main(argv):
         original_inputs, converted, cycled = model(batch, direction=direction)
 
         for (original, transfer, cycle) in zip(original_inputs, converted, cycled):
-            save_midis(original[newaxis, ...], f"{outpath}/{idx}_original.mid")
-            save_midis(transfer[newaxis, ...], f"{outpath}/{idx}_transfer.mid")
-            save_midis(cycle[newaxis, ...], f"{outpath}/{idx}_cycle.mid")
+            save_midis(
+                original[newaxis, ...], f"{outpath}/{idx}_original.mid", tempo=120
+            )
+            save_midis(
+                transfer[newaxis, ...], f"{outpath}/{idx}_transfer.mid", tempo=120
+            )
+            save_midis(cycle[newaxis, ...], f"{outpath}/{idx}_cycle.mid", tempo=120)
             idx += 1
 
 
