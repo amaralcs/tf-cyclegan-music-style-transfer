@@ -7,7 +7,7 @@ from yaml import safe_load, YAMLError
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, LearningRateScheduler
 
-from utils import load_data, gen_random_name
+from utils import load_data
 from cyclegan import CycleGAN
 
 
@@ -182,10 +182,10 @@ def load_config(config_path):
     """
     with open(config_path, "r") as config_file:
         try:
-            model_config = safe_load(config_file)
+            config = safe_load(config_file)
         except YAMLError as e:
             raise e
-    return model_config["CycleGAN"]
+    return config["CycleGAN"], config["training"]
 
 
 def main(argv):
@@ -202,8 +202,8 @@ def main(argv):
     log_dir = args.log_dir
 
     # debug path
-    path_a = "../data/cycleGAN/prepared_data/JC_C_cp/tfrecord"  # dummy dir with less data
-    path_b = "data/cycleGAN/prepared_data/JC_J_cp/tfrecord"
+    # path_a = "../data/cycleGAN/prepared_data/JC_C_cp/tfrecord"  # dummy dir with less data
+    # path_b = "data/cycleGAN/prepared_data/JC_J_cp/tfrecord"
 
     learning_rate = args.learning_rate
     step = args.lr_step
@@ -222,27 +222,27 @@ def main(argv):
 
     os.makedirs(model_output, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
+    # Setup monitoring and callbacks
+    model_config, training_config = load_config(config_path)
+
+    sigma_d = model_config["sigma_d"]
+    note_range = model_config["pitch_range"]
+    n_timesteps = model_config["n_timesteps"]
+
+    epochs = training_config["epochs"]
+    batch_size = training_config["batch_size"]
 
     dataset = load_data(
         path_a, path_b, "train", batch_size=batch_size, cycle_length=500, shuffle=True
     )
 
-    # Setup monitoring and callbacks
-    model_config = load_config(config_path)
-    sigma_d = model_config["sigma_d"]
-    note_range = model_config["pitch_range"]
-    n_timesteps = model_config["n_timesteps"]
     model_info, callbacks = setup(
         log_dir,
         genre_a,
         genre_b,
         epochs,
-        batch_size,
         learning_rate,
         step,
-        sigma_d,
-        note_range,
-        n_timesteps,
     )
 
     # Setup model
