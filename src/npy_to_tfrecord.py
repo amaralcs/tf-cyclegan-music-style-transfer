@@ -10,9 +10,9 @@ if __name__ == "__main__":
     """This should be implemented in the prepare data step, rather than writing to a numpy file,
     We can write directly to tf record
     """
-    path = "data/JC_C"
-    outpath = "data/JC_C/tfrecord"
-    set_type = "train"
+    path = "data/JP_J"
+    outpath = "data/JP_J/tfrecord"
+    set_type = "test"
     os.makedirs(os.path.join(outpath, set_type), exist_ok=True)
 
     fnames = glob(os.path.join(path, set_type, "*.*"))
