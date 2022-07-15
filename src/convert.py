@@ -10,7 +10,10 @@ from cyclegan import CycleGAN
 
 logger = logging.getLogger("convert_logger")
 logger.setLevel(logging.INFO)
-logger.addHandler(logging.StreamHandler())
+handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s : %(name)s [%(levelname)s] : %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"  # Suppress tensorflow logs
 
@@ -32,13 +35,6 @@ def parse_args(argv):
     args.add_argument("path_b", type=str, help="Path to tfrecord files of dataset B.")
     args.add_argument("model_path", type=str, help="Path to a trained CycleGAN model.")
     args.add_argument(
-        "--direction",
-        type=str,
-        default="A2B",
-        help="Transfer direction.",
-        choices=["A2B", "B2A"],
-    )
-    args.add_argument(
         "--set_type",
         type=str,
         default="test",
@@ -51,6 +47,16 @@ def parse_args(argv):
     return args.parse_args(argv)
 
 
+def convert_batch(model, batch, outpath, direction, idx):
+    original_inputs, converted, cycled = model(batch, direction=direction)
+    for (original, transfer, cycle) in zip(original_inputs, converted, cycled):
+        save_midis(original[newaxis, ...], f"{outpath}/{idx}_original.mid", tempo=120)
+        save_midis(transfer[newaxis, ...], f"{outpath}/{idx}_transfer.mid", tempo=120)
+        save_midis(cycle[newaxis, ...], f"{outpath}/{idx}_cycle.mid", tempo=120)
+        idx += 1
+    return idx
+
+
 def main(argv):
     """The main function for training."""
     args = parse_args(argv)
@@ -60,20 +66,19 @@ def main(argv):
     model_name = model_path.split("/")[-1]
     model_fpath = os.path.join(os.getcwd(), model_path, "weights", "")
 
-    direction = args.direction
     outpath = args.outpath
     set_type = args.set_type
 
     # debug args
-    # path_a = "data/JC_C_cp/tfrecord"  # dummy dir with less data
-    # path_b = "data/JC_J_cp/tfrecord"
+    # path_a = "data/tfrecord/JC_C_cp"  # dummy dir with less data
+    # path_b = "data/tfrecord/JC_J_cp"
     # model_path = "trained_models"
     # model_name = "classic2jazz_15e_bs32_run_2022_06_22-20_08_16"
     # model_fpath = os.path.join(os.getcwd(), model_path, model_name, "weights", "")
 
     # TODO: Handle this a bit more cleanly
-    genre_a = path_a.split("/")[1]
-    genre_b = path_b.split("/")[1]
+    genre_a = path_a.split("/")[-1]
+    genre_b = path_b.split("/")[-1]
     if genre_a == path_a or genre_b == path_b:
         raise Exception(
             "There was an issue parsing the genre from the filename. Check the separator used."
@@ -86,23 +91,14 @@ def main(argv):
     model.load_weights(model_fpath)
     logger.debug(f"\tsuccess!")
 
-    outpath = f"converted/{model_name}/{direction}"
+    outpath = f"{outpath}/{model_name}"
     os.makedirs(outpath, exist_ok=True)
     logger.debug(f"Converting and saving results to {outpath}")
 
-    idx = 0
+    idx_a2b, idx_b2a = 0, 0
     for batch in dataset:
-        original_inputs, converted, cycled = model(batch, direction=direction)
-
-        for (original, transfer, cycle) in zip(original_inputs, converted, cycled):
-            save_midis(
-                original[newaxis, ...], f"{outpath}/{idx}_original.mid", tempo=120
-            )
-            save_midis(
-                transfer[newaxis, ...], f"{outpath}/{idx}_transfer.mid", tempo=120
-            )
-            save_midis(cycle[newaxis, ...], f"{outpath}/{idx}_cycle.mid", tempo=120)
-            idx += 1
+        idx_a2b = convert_batch(model, batch, outpath, "A2B", idx_a2b)
+        idx_b2a = convert_batch(model, batch, outpath, "B2A", idx_b2a)
 
 
 if __name__ == "__main__":

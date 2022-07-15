@@ -20,7 +20,10 @@ from eval_utils import (
 
 logger = logging.getLogger("evaluation_logger")
 logger.setLevel(logging.INFO)
-logger.addHandler(logging.StreamHandler())
+handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s : %(name)s [%(levelname)s] : %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def parse_args(argv):
@@ -206,15 +209,20 @@ def main(argv):
     """Main function to compute evaluation metrics"""
     args = parse_args(argv)
     fpath = args.fpath
+    genre_a = args.genre_a
+    genre_b = args.genre_b
     model = args.model
     outpath = args.outpath
 
     chroma_args = dict(sampling_rate=12, window_size=24, stride=12, use_velocity=False)
     hist_kwargs = dict(max_time=4, bin_size=1 / 6, normed=True)
+    genre_a, genre_b = genre_a.replace(" ", "_"), genre_b.replace(" ", "_")
 
     # Test args
     # fpath = "converted"
     # model = "CP_C2CP_P_30e_bs32_nr84_ts64_sd1_run_2022_06_25-19_24_32"
+    # genre_a = "CP_C"
+    # genre_b = "CP_P"
     # outpath = "results"
 
     # load data
@@ -223,15 +231,6 @@ def main(argv):
     fpaths_B2A = glob(base.format(fpath, model, "B2A"))
     tup_a = load_converted_songs(fpaths_A2B)
     tup_b = load_converted_songs(fpaths_B2A)
-
-    # Get the names of the genres
-    pattern = r"^(.+?)2(.+?)_\d+e"
-    match = re.match(pattern, model)
-    genre_a, genre_b = match.group(1, 2)
-    genre_a = genre_a.replace(" ", "_")
-    genre_b = genre_b.replace(" ", "_")
-    logger.debug(f"\tgenre_a: {genre_a}")
-    logger.debug(f"\tgenre_b: {genre_b}")
 
     logger.info("Computing chroma_similarities...")
     results = {
