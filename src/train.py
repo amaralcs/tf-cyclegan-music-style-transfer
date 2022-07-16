@@ -4,6 +4,7 @@ import time
 from argparse import ArgumentParser
 from yaml import safe_load, YAMLError
 from shutil import copy
+import logging
 
 
 import tensorflow as tf
