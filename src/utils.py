@@ -11,13 +11,11 @@ from tensorflow.data import Dataset
 
 import write_midi
 
-
+logging.basicConfig(
+    format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
+    level=logging.INFO,
+)
 logger = logging.getLogger("utils_logger")
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s : %(name)s [%(levelname)s] : %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
 
 class InstanceNorm(Layer):

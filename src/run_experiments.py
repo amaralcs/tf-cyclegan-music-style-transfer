@@ -11,12 +11,13 @@ from train import main as train_pipeline
 from convert import main as style_transfer
 from evaluate import main as eval_experiment
 
+logging.basicConfig(
+    filename="experiments.log",
+    filemode="a",
+    format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
+    level=logging.INFO,
+)
 logger = logging.getLogger("experiment_logger")
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s : %(name)s [%(levelname)s] : %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress tensorflow warning logs
 
@@ -90,7 +91,8 @@ def main(argv):
     bd_genre_b = args.bd_genre_b
 
     config_path = "src/config.yaml"
-    settings = {"n_bars": [4]}
+    n_bars = [1, 2, 4, 8]
+    batch_sizes = [64, 64, 32, 16]
     config_outfile = "src/train_config.yaml"
 
     bodhidharma_path = "../data/bodhidharma"
@@ -98,13 +100,15 @@ def main(argv):
 
     results_outpath = "results/bodhidharma"
 
-    for n_bars in settings["n_bars"]:
+    for n_bars, batch_size in zip(n_bars, batch_sizes):
+        logger.info("#" * 30)
         logger.info(f"Experiment: n_bars = {n_bars}")
         cur_config = load_config(config_path)
 
         # Update config file with experiment settings
         cur_config["preprocessing"]["n_bars"] = n_bars
         cur_config["CycleGAN"]["n_timesteps"] = n_bars * 16
+        cur_config["training"]["batch_size"] = batch_size
 
         prep_outpath = f"prep_data/tfrecord/{n_bars}_bars"
         prep_data(
@@ -190,6 +194,7 @@ def main(argv):
                 eval_results_path,
             ]
         )
+        logger.info("")
 
 
 if __name__ == "__main__":

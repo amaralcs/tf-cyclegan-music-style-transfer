@@ -9,12 +9,12 @@ from yaml import safe_load, YAMLError
 from utils import load_data, save_midis
 from cyclegan import CycleGAN
 
+
+logging.basicConfig(
+    format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
+    level=logging.INFO,
+)
 logger = logging.getLogger("convert_logger")
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s : %(name)s [%(levelname)s] : %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"  # Suppress tensorflow logs
 

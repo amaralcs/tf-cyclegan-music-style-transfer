@@ -33,12 +33,11 @@ from pypianoroll import Multitrack, Track, from_pretty_midi
 import pretty_midi
 
 
+logging.basicConfig(
+    format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
+    level=logging.INFO,
+)
 logger = logging.getLogger("preprocessing_logger")
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s : %(name)s [%(levelname)s] : %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress tensorflow logs
 
@@ -312,7 +311,7 @@ def convert_and_clean_midis(midi_fpath, **filter_kwargs):
 
     # First step: load midis, create multitracks of each and save them
     # midi_paths = get_midi_path(midi_fpath)
-    midi_paths = glob(os.path.join(midi_fpath, "*.mid*"))[:50]  # TODO
+    midi_paths = glob(os.path.join(midi_fpath, "*.mid*"))
     logger.info(f"Found {len(midi_paths)} midi files")
 
     midi_tracks = [create_multitracks(midi_path) for midi_path in midi_paths]

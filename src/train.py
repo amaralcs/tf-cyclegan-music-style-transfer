@@ -12,6 +12,11 @@ from tensorflow.keras.callbacks import TensorBoard, LearningRateScheduler
 from utils import load_data
 from cyclegan import CycleGAN
 
+logging.basicConfig(
+    format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
+    level=logging.INFO,
+)
+logger = logging.getLogger("train_logger")
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"  # Suppress tensorflow logs
 
