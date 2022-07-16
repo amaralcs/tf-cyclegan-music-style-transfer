@@ -345,7 +345,7 @@ def load_data(path_a, path_b, set_type, batch_size=16, shuffle=False, cycle_leng
     return join_datasets(dataset_a, dataset_b, batch_size, shuffle=shuffle)
 
 
-def save_midis(bars, file_path, tempo=80.0):
+def save_midis(bars, file_path, n_timesteps=64, tempo=80.0):
     # Pad the input bars so that they're in the MIDI range (0-128) rather than 0-84
     padded_bars = np.concatenate(
         (
@@ -356,7 +356,7 @@ def save_midis(bars, file_path, tempo=80.0):
         axis=2,
     )
     padded_bars = padded_bars.reshape(
-        -1, 64, padded_bars.shape[2], padded_bars.shape[3]
+        -1, n_timesteps, padded_bars.shape[2], padded_bars.shape[3]
     )
     padded_bars_list = []
     for ch_idx in range(padded_bars.shape[3]):

@@ -56,21 +56,26 @@ def parse_args(argv):
     return args.parse_args(argv)
 
 
-def convert_batch(model, batch, outpath, direction, idx):
+def convert_batch(model, batch, outpath, direction, idx, n_timesteps):
     original_inputs, converted, cycled = model(batch, direction=direction)
     for (original, transfer, cycle) in zip(original_inputs, converted, cycled):
         save_midis(
             original[newaxis, ...],
             f"{outpath}/{direction}/{idx}_original.mid",
             tempo=120,
+            n_timesteps=n_timesteps,
         )
         save_midis(
             transfer[newaxis, ...],
             f"{outpath}/{direction}/{idx}_transfer.mid",
             tempo=120,
+            n_timesteps=n_timesteps,
         )
         save_midis(
-            cycle[newaxis, ...], f"{outpath}/{direction}/{idx}_cycle.mid", tempo=120
+            cycle[newaxis, ...],
+            f"{outpath}/{direction}/{idx}_cycle.mid",
+            tempo=120,
+            n_timesteps=n_timesteps,
         )
         idx += 1
     return idx
@@ -117,6 +122,7 @@ def main(argv):
     dataset = load_data(path_a, path_b, set_type, shuffle=False)
 
     model_config = load_config(config_fpath)
+    n_timesteps = model_config["n_timesteps"]
 
     # Setup model
     logger.info(f"Loading model from {model_fpath}")
@@ -131,8 +137,8 @@ def main(argv):
 
     idx_a2b, idx_b2a = 0, 0
     for batch in dataset:
-        idx_a2b = convert_batch(model, batch, outpath, "A2B", idx_a2b)
-        idx_b2a = convert_batch(model, batch, outpath, "B2A", idx_b2a)
+        idx_a2b = convert_batch(model, batch, outpath, "A2B", idx_a2b, n_timesteps)
+        idx_b2a = convert_batch(model, batch, outpath, "B2A", idx_b2a, n_timesteps)
     logger.info(f"[Done]")
 
 
