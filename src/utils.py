@@ -82,7 +82,7 @@ class ResNetBlock(Layer):
         self.kernel_size = kernel_size
         self.kernel_initializer = kernel_initializer
         self.strides = strides
-        self.pad_size = self.kernel_size - 1  # 2
+        self.pad_size = (self.kernel_size - 1) // 2
         self.padding = "valid"
         self.activation = keras.activations.get(activation)
 
