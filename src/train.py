@@ -3,6 +3,8 @@ import os
 import time
 from argparse import ArgumentParser
 from yaml import safe_load, YAMLError
+from shutil import copy
+
 
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, LearningRateScheduler
@@ -29,6 +31,8 @@ def parse_args(argv):
     args = ArgumentParser()
     args.add_argument("path_a", type=str, help="Path to tfrecord files of dataset A.")
     args.add_argument("path_b", type=str, help="Path to tfrecord files of dataset B.")
+    args.add_argument("genre_a", type=str, help="Name of genre A.")
+    args.add_argument("genre_b", type=str, help="Name of genre B.")
     args.add_argument(
         "--batch_size", default=32, type=int, help="Batch size used for training."
     )
@@ -197,6 +201,8 @@ def main(argv):
     args = parse_args(argv)
     path_a = args.path_a
     path_b = args.path_b
+    genre_a = args.genre_a
+    genre_b = args.genre_b
     model_output = args.model_output
     config_path = args.config_path
     log_dir = args.log_dir
@@ -212,22 +218,10 @@ def main(argv):
     epochs = args.epochs
     optimizer_params = dict(learning_rate=learning_rate, beta_1=beta_1)
 
-    # TODO: Handle this a bit more cleanly
-    genre_a = path_a.split("/")[1]
-    genre_b = path_b.split("/")[1]
-    if genre_a == path_a or genre_b == path_b:
-        raise Exception(
-            "There was an issue parsing the genre from the filename. Check the separator used."
-        )
-
     os.makedirs(model_output, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
     # Setup monitoring and callbacks
     model_config, training_config = load_config(config_path)
-
-    sigma_d = model_config["sigma_d"]
-    note_range = model_config["pitch_range"]
-    n_timesteps = model_config["n_timesteps"]
 
     epochs = training_config["epochs"]
     batch_size = training_config["batch_size"]

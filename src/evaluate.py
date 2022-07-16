@@ -40,6 +40,8 @@ def parse_args(argv):
     """
     args = ArgumentParser()
     args.add_argument("fpath", type=str, help="Path to the converted songs.")
+    args.add_argument("genre_a", type=str, help="Name of genre A.")
+    args.add_argument("genre_b", type=str, help="Name of genre B.")
     args.add_argument("model", type=str, help="Name of model to evaluate.")
     args.add_argument("outpath", type=str, help="Path to save the results to.")
 
