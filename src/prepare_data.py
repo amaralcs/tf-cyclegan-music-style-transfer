@@ -258,8 +258,11 @@ def create_multitracks(filepath):
         return [midi_name, midi_info, merged]
 
     except TypeError:
-        print(f"There was a type error when loading {midi_name}")
-        return None
+        logger.warn(f"There was a type error when loading {midi_name}")
+        return [midi_name, {"first_beat_time": 9999}, []]
+    except IndexError:
+        logger.warn(f"There was a type error when loading {midi_name}, skipping it...")
+        return [midi_name, {"first_beat_time": 9999}, []]
 
 
 def filter_track(
