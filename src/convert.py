@@ -119,6 +119,10 @@ def main(argv):
     # model_name = "classic2jazz_15e_bs32_run_2022_06_22-20_08_16"
     # model_fpath = os.path.join(os.getcwd(), model_path, model_name, "weights", "")
 
+    logger.info(
+        "#" * 20 + f" Converting {genre_a}2{genre_b} with: {model_name} " + "#" * 20
+    )
+
     dataset = load_data(path_a, path_b, set_type, shuffle=False)
 
     model_config = load_config(config_fpath)

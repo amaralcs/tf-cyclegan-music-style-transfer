@@ -34,6 +34,7 @@ import pretty_midi
 
 
 logging.basicConfig(
+    filename="data_prep.log",
     format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
     level=logging.INFO,
 )
@@ -257,11 +258,8 @@ def create_multitracks(filepath):
 
         return [midi_name, midi_info, merged]
 
-    except TypeError:
-        logger.warn(f"There was a type error when loading {midi_name}")
-        return [midi_name, {"first_beat_time": 9999}, []]
-    except IndexError:
-        logger.warn(f"There was a type error when loading {midi_name}, skipping it...")
+    except Exception:
+        logger.warning(f"There was a type error when loading {midi_name}, skipping it...")
         return [midi_name, {"first_beat_time": 9999}, []]
 
 
@@ -523,6 +521,7 @@ def main(argv):
     clip_range = (args.clip_low, args.clip_high)
     drop_phrases = args.drop_phrases
 
+    logger.info("#" * 20 + f" Data prep: {genre} - n_bars: {n_bars} " + "#" * 20)
     midi_fpaths = os.path.join(root_path, genre)
     tracks = convert_and_clean_midis(midi_fpaths)
     trimmed_tracks = trim_midi_files(

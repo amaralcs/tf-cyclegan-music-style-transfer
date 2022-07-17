@@ -19,6 +19,7 @@ from eval_utils import (
 )
 
 logging.basicConfig(
+    filename="evaluation.log"
     format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
     level=logging.INFO,
 )
@@ -225,6 +226,8 @@ def main(argv):
     # genre_a = "CP_C"
     # genre_b = "CP_P"
     # outpath = "results"
+
+    logger.info("#"*20 + f" Evaluating {genre_a}2{genre_b} " + "#"*20)
 
     # load data
     base = "{}/{}/{}/*.mid*"
