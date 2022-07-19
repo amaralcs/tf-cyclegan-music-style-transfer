@@ -19,7 +19,7 @@ from eval_utils import (
 )
 
 logging.basicConfig(
-    filename="evaluation.log"
+    filename="evaluation.log",
     format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
     level=logging.INFO,
 )

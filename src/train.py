@@ -14,6 +14,7 @@ from utils import load_data
 from cyclegan import CycleGAN
 
 logging.basicConfig(
+    filename="training.log",
     format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
     level=logging.INFO,
 )
@@ -224,6 +225,7 @@ def main(argv):
     epochs = args.epochs
     optimizer_params = dict(learning_rate=learning_rate, beta_1=beta_1)
 
+    logger.info("#"*20 + f" Training {genre_a}2{genre_b} " + "#"*20)
     os.makedirs(model_output, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
     # Setup monitoring and callbacks

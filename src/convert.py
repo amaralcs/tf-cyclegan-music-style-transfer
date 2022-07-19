@@ -11,6 +11,7 @@ from cyclegan import CycleGAN
 
 
 logging.basicConfig(
+    filename="converter.log",
     format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
     level=logging.INFO,
 )
