@@ -62,9 +62,9 @@ def convert_batch(model, batch, outpath, direction, idx):
     for (original, transfer, cycle) in zip(original_inputs, converted, cycled):
         base_name = f"{outpath}/{direction}/{idx}"
 
-        save_midis(original, f"{base_name}_original.mid")
-        save_midis(transfer, f"{base_name}_transfer.mid")
-        save_midis(cycle, f"{base_name}_cycle.mid")
+        save_midis(original, f"{base_name}_original.mid", fs=16)
+        save_midis(transfer, f"{base_name}_transfer.mid", fs=16)
+        save_midis(cycle, f"{base_name}_cycle.mid", fs=16)
 
         idx += 1
     return idx
