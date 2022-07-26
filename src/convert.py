@@ -57,7 +57,7 @@ def parse_args(argv):
     return args.parse_args(argv)
 
 
-def convert_batch(model, batch, outpath, direction, idx, n_timesteps):
+def convert_batch(model, batch, outpath, direction, idx):
     original_inputs, converted, cycled = model(batch, direction=direction)
     for (original, transfer, cycle) in zip(original_inputs, converted, cycled):
         base_name = f"{outpath}/{direction}/{idx}"
@@ -87,19 +87,19 @@ def load_config(config_path):
 
 
 def main(argv):
-    """The main function for training."""
+    """The main function for performing style transfer."""
     args = parse_args(argv)
     path_a = args.path_a
     path_b = args.path_b
     genre_a = args.genre_a
     genre_b = args.genre_b
     model_path = args.model_path
+    set_type = args.set_type
+    config_fpath = args.config_fpath
+    outpath = args.outpath
+
     model_name = model_path.split("/")[-1]
     model_fpath = os.path.join(os.getcwd(), model_path, "weights", "")
-    config_fpath = args.config_fpath
-
-    outpath = args.outpath
-    set_type = args.set_type
 
     logger.info(
         "#" * 20 + f" Converting {genre_a}2{genre_b} with: {model_name} " + "#" * 20
@@ -123,8 +123,8 @@ def main(argv):
 
     idx_a2b, idx_b2a = 0, 0
     for batch in dataset:
-        idx_a2b = convert_batch(model, batch, outpath, "A2B", idx_a2b, n_timesteps)
-        idx_b2a = convert_batch(model, batch, outpath, "B2A", idx_b2a, n_timesteps)
+        idx_a2b = convert_batch(model, batch, outpath, "A2B", idx_a2b)
+        idx_b2a = convert_batch(model, batch, outpath, "B2A", idx_b2a)
     logger.info(f"[Done]")
 
 
