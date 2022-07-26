@@ -9,7 +9,7 @@ from tensorflow import keras
 from tensorflow.keras.layers import Layer, Input, Conv2D, Lambda, ReLU, Conv2DTranspose
 from tensorflow.data import Dataset
 
-import write_midi
+from reverse_pianoroll import piano_roll_to_pretty_midi
 
 logging.basicConfig(
     format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
@@ -343,36 +343,31 @@ def load_data(path_a, path_b, set_type, batch_size=16, shuffle=False, cycle_leng
     return join_datasets(dataset_a, dataset_b, batch_size, shuffle=shuffle)
 
 
-def save_midis(bars, file_path, n_timesteps=64, tempo=80.0):
-    # Pad the input bars so that they're in the MIDI range (0-128) rather than 0-84
-    padded_bars = np.concatenate(
-        (
-            np.zeros((bars.shape[0], bars.shape[1], 24, bars.shape[3])),
-            bars,
-            np.zeros((bars.shape[0], bars.shape[1], 20, bars.shape[3])),
-        ),
-        axis=2,
-    )
-    padded_bars = padded_bars.reshape(
-        -1, n_timesteps, padded_bars.shape[2], padded_bars.shape[3]
-    )
-    padded_bars_list = []
-    for ch_idx in range(padded_bars.shape[3]):
-        padded_bars_list.append(
-            padded_bars[:, :, :, ch_idx].reshape(
-                padded_bars.shape[0], padded_bars.shape[1], padded_bars.shape[2]
-            )
-        )
-    # this is for multi-track version
-    # write_midi.write_piano_rolls_to_midi(padded_bars_list, program_nums=[33, 0, 25, 49, 0],
-    #                                      is_drum=[False, True, False, False, False], filename=file_path, tempo=80.0)
+def save_midis(piano_roll, file_name, **kwargs):
+    """Take a numpy array and convert it to a midi file.
 
-    # this is for single-track version
-    write_midi.write_piano_rolls_to_midi(
-        piano_rolls=padded_bars_list,
-        program_nums=[0],
-        is_drum=[False],
-        filename=file_path,
-        tempo=tempo,
-        beat_resolution=4,
+    The input piano roll is padded so that it fits the number of midi instruments (128)
+    and reshaped to shape=(128, frames) where frames is the length of the song.
+
+    Parameters
+    ----------
+    piano_roll : np.array
+        Array of shape (n_timesteps, 84, 1) where n_timesteps is the number of timesteps
+        which the model was trained on.
+    file_name: str
+        Name of the output file.
+    """
+    piano_roll = piano_roll.squeeze()  # remove unnecessary dimension
+    piano_roll = np.concatenate(
+        (
+            np.zeros((piano_roll.shape[0], 24)),
+            piano_roll,
+            np.zeros((piano_roll.shape[0], 20)),
+        ),
+        axis=1,
     )
+    # shape = (128, n_timesteps), maximize note velocity
+    piano_roll = piano_roll.T * 127 
+
+    pm = piano_roll_to_pretty_midi(piano_roll, **kwargs)
+    pm.write(file_name)
