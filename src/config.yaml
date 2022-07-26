@@ -1,5 +1,5 @@
 training:
-    epochs: 1
+    epochs: 30
     batch_size: 32
 
 CycleGAN:

@@ -60,24 +60,12 @@ def parse_args(argv):
 def convert_batch(model, batch, outpath, direction, idx, n_timesteps):
     original_inputs, converted, cycled = model(batch, direction=direction)
     for (original, transfer, cycle) in zip(original_inputs, converted, cycled):
-        save_midis(
-            original[newaxis, ...],
-            f"{outpath}/{direction}/{idx}_original.mid",
-            tempo=120,
-            n_timesteps=n_timesteps,
-        )
-        save_midis(
-            transfer[newaxis, ...],
-            f"{outpath}/{direction}/{idx}_transfer.mid",
-            tempo=120,
-            n_timesteps=n_timesteps,
-        )
-        save_midis(
-            cycle[newaxis, ...],
-            f"{outpath}/{direction}/{idx}_cycle.mid",
-            tempo=120,
-            n_timesteps=n_timesteps,
-        )
+        base_name = f"{outpath}/{direction}/{idx}"
+
+        save_midis(original, f"{base_name}_original.mid")
+        save_midis(transfer, f"{base_name}_transfer.mid")
+        save_midis(cycle, f"{base_name}_cycle.mid")
+
         idx += 1
     return idx
 
@@ -112,13 +100,6 @@ def main(argv):
 
     outpath = args.outpath
     set_type = args.set_type
-
-    # debug args
-    # path_a = "data/tfrecord/JC_C_cp"  # dummy dir with less data
-    # path_b = "data/tfrecord/JC_J_cp"
-    # model_path = "trained_models"
-    # model_name = "classic2jazz_15e_bs32_run_2022_06_22-20_08_16"
-    # model_fpath = os.path.join(os.getcwd(), model_path, model_name, "weights", "")
 
     logger.info(
         "#" * 20 + f" Converting {genre_a}2{genre_b} with: {model_name} " + "#" * 20
