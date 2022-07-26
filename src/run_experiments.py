@@ -13,7 +13,6 @@ from evaluate import main as eval_experiment
 
 logging.basicConfig(
     filename="experiments.log",
-    filemode="a",
     format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
     level=logging.INFO,
 )
@@ -92,7 +91,7 @@ def main(argv):
 
     config_path = "src/config.yaml"
     n_bars = [1, 2, 4, 8]
-    batch_sizes = [64, 64, 32, 16]
+    batch_sizes = [64, 48, 32, 16]
     config_outfile = "src/train_config.yaml"
 
     bodhidharma_path = "../data/bodhidharma"
@@ -110,21 +109,15 @@ def main(argv):
         cur_config["CycleGAN"]["n_timesteps"] = n_bars * 16
         cur_config["training"]["batch_size"] = batch_size
 
-        prep_outpath = f"prep_data/tfrecord/{n_bars}_bars"
-        prep_data(
-            [root_path, genre_a, "--n_bars", str(n_bars), "--outpath", prep_outpath]
-        )
-        prep_data(
-            [root_path, genre_b, "--n_bars", str(n_bars), "--outpath", prep_outpath]
-        )
+        prep_path = f"tfrecord/{n_bars}_bars"
 
         logger.info(f"Saving {config_outfile}")
         with open(config_outfile, "w") as f:
             dump(cur_config, f)
 
         logger.info("Training with new config...")
-        train_path_a = os.path.join("../data/cycleGAN", prep_outpath, genre_a)
-        train_path_b = os.path.join("../data/cycleGAN", prep_outpath, genre_b)
+        train_path_a = os.path.join("../data/cycleGAN", prep_path, genre_a)
+        train_path_b = os.path.join("../data/cycleGAN", prep_path, genre_b)
         logger.debug(f"path_a: {train_path_a}")
         logger.debug(f"path_b: {train_path_b}")
         train_pipeline(
@@ -142,38 +135,12 @@ def main(argv):
         model_name = get_latest_trained_model()
         model_fpath = f"trained_models/{model_name}"
 
-        # Prep bodhidharma data for transfer
-        bd_prep_outpath = f"tfrecord/{n_bars}_bars"
-        prep_data(
-            [
-                bodhidharma_path,
-                bd_genre_a,
-                "--n_bars",
-                str(n_bars),
-                "--test-ratio",
-                "1",
-                "--outpath",
-                bd_prep_outpath,
-            ]
-        )
-        prep_data(
-            [
-                bodhidharma_path,
-                bd_genre_b,
-                "--n_bars",
-                str(n_bars),
-                "--test-ratio",
-                "1",
-                "--outpath",
-                bd_prep_outpath,
-            ]
-        )
         transfer_outpath = os.path.join(convert_outpath, f"{n_bars}_bars")
         logger.info(f"transfer_outpath: {transfer_outpath}")
         style_transfer(
             [
-                os.path.join(bodhidharma_path, bd_prep_outpath, bd_genre_a),
-                os.path.join(bodhidharma_path, bd_prep_outpath, bd_genre_b),
+                os.path.join(bodhidharma_path, prep_path, bd_genre_a),
+                os.path.join(bodhidharma_path, prep_path, bd_genre_b),
                 bd_genre_a,
                 bd_genre_b,
                 model_fpath,
