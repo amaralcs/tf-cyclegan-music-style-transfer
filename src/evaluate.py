@@ -1,4 +1,37 @@
-from ast import parse
+"""
+    Evaluate the results of style transfer for a given model and genres.
+    This script runs evaluations for both A2B and B2A transfers.
+    
+    The path to the converted data should have the following structure:
+
+    converted/
+     |
+     |-- n_bars/
+     |   |
+     |   |-- model_name/
+     |   |   |
+     |   |   |-- A2B/
+     |   |   |  |
+     |   |   |  |-- file1.mid
+     |   |   |  |-- file2.mid
+     |   |   |  |-- ...
+     |   |   |  
+     |   |   |-- B2A/
+     |   |   |  |
+     |   |   |  |-- file1.mid
+     |   |   |  |-- file2.mid
+     |   |   |  |-- ...
+
+    Usage
+    -----
+    python src/evaluate.py \\
+        converted/4_bars \\
+        Pop \\
+        Jazz \\
+        Pop2Jazz \\
+        results/pop2jazz_4_bars
+
+"""
 import sys
 import os
 import re
@@ -220,14 +253,7 @@ def main(argv):
     hist_kwargs = dict(max_time=4, bin_size=1 / 6, normed=True)
     genre_a, genre_b = genre_a.replace(" ", "_"), genre_b.replace(" ", "_")
 
-    # Test args
-    # fpath = "converted"
-    # model = "CP_C2CP_P_30e_bs32_nr84_ts64_sd1_run_2022_06_25-19_24_32"
-    # genre_a = "CP_C"
-    # genre_b = "CP_P"
-    # outpath = "results"
-
-    logger.info("#"*20 + f" Evaluating {genre_a}2{genre_b} " + "#"*20)
+    logger.info("#" * 20 + f" Evaluating {genre_a}2{genre_b} " + "#" * 20)
 
     # load data
     base = "{}/{}/{}/*.mid*"

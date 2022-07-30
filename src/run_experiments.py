@@ -1,3 +1,25 @@
+"""
+    Trains a number of CycleGAN models for experimentation.
+
+    A few things are hardcored in this script as I didn't have much time to tidy it up.
+    The experiments are evaluated against the bodhidharma dataset (assumed to be in ../data/bodhidharma).
+    
+    Usage
+    -----
+    To run experiments for the original CycleGAN datasets in the `data/CycleGAN` folder
+    use:
+        python src/run_experiments.py \\
+            data/CycleGAN \\
+            genre_a \\
+            genre_b \\
+            bodhidharma_genre_a \\
+            bodhidharma_genre_b
+    
+    This assumes that the `data/CycleGAN` directory contains folders of the form
+        `tfrecord/n_bars/genre_a`
+        `tfrecord/n_bars/genre_b`
+    with the prepared data.
+"""
 import sys
 import os
 import logging

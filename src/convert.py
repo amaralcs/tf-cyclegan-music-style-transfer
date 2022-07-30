@@ -1,4 +1,18 @@
-# Initial setup to be able to load `src.cyclegan`
+"""
+    Utility script to convert songs using a trained CycleGAN model.
+    
+    Usage
+    -----
+        python convert.py \\
+            datasets/jazz \\
+            dataset/classical  \\
+            jazz  \\ 
+            classical \\
+            trained_models/jazz2classical \\
+            --set_type test \\
+            --config_path trained_models/jazz2classical/train_config.yaml \\
+            --outpath converted_songs
+"""
 import sys
 import os
 from numpy import newaxis
@@ -6,7 +20,7 @@ import logging
 from argparse import ArgumentParser
 from yaml import safe_load, YAMLError
 
-from utils import load_data, save_midis
+from utils.utils import load_data, save_midis
 from cyclegan import CycleGAN
 
 

@@ -1,3 +1,17 @@
+"""
+    Train and save a CycleGAN model.
+
+    Usage
+    -----
+
+    To train a model on genres `a` and `b` using 2 bars and default hyperparameters:
+        python src/train.py \\
+            data/tfrecord/2_bars/genre_a \\
+            data/tfrecord/2_bars/genre_b \\
+            genre_a \\
+            genre_b
+
+"""
 import sys
 import os
 import time
@@ -213,10 +227,6 @@ def main(argv):
     model_output = args.model_output
     config_path = args.config_path
     log_dir = args.log_dir
-
-    # debug path
-    # path_a = "../data/cycleGAN/prepared_data/JC_C_cp/tfrecord"  # dummy dir with less data
-    # path_b = "data/cycleGAN/prepared_data/JC_J_cp/tfrecord"
 
     learning_rate = args.learning_rate
     step = args.lr_step
