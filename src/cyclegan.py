@@ -4,7 +4,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import Conv2D, Input, Lambda, LeakyReLU
 
-from utils import Conv2DBlock, Deconv2DBlock, ResNetBlock, input_padding
+from utils.utils import Conv2DBlock, Deconv2DBlock, ResNetBlock, input_padding
 
 
 class CycleGAN(Model):

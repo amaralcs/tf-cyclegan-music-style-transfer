@@ -11,3 +11,6 @@ cyclegan_eval.zip
 *.log
 *.ps1
 src/train_config.yaml
+imgs/
+results/
+src/*_single.py

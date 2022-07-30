@@ -9,7 +9,7 @@ import json
 import logging
 from argparse import ArgumentParser
 
-from eval_utils import (
+from utils.eval_utils import (
     eval_chroma_similarities,
     gen_histograms,
     time_pitch_diff_hist,

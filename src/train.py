@@ -10,7 +10,7 @@ import logging
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, LearningRateScheduler
 
-from utils import load_data
+from utils.utils import load_data
 from cyclegan import CycleGAN
 
 logging.basicConfig(
@@ -225,7 +225,7 @@ def main(argv):
     epochs = args.epochs
     optimizer_params = dict(learning_rate=learning_rate, beta_1=beta_1)
 
-    logger.info("#"*20 + f" Training {genre_a}2{genre_b} " + "#"*20)
+    logger.info("#" * 20 + f" Training {genre_a}2{genre_b} " + "#" * 20)
     os.makedirs(model_output, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
     # Setup monitoring and callbacks

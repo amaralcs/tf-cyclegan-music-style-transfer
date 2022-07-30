@@ -9,7 +9,7 @@ from tensorflow import keras
 from tensorflow.keras.layers import Layer, Input, Conv2D, Lambda, ReLU, Conv2DTranspose
 from tensorflow.data import Dataset
 
-from reverse_pianoroll import piano_roll_to_pretty_midi
+from utils.reverse_pianoroll import piano_roll_to_pretty_midi
 
 logging.basicConfig(
     format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
@@ -367,7 +367,7 @@ def save_midis(piano_roll, file_name, **kwargs):
         axis=1,
     )
     # shape = (128, n_timesteps), maximize note velocity
-    piano_roll = piano_roll.T * 127 
+    piano_roll = piano_roll.T * 127
 
     pm = piano_roll_to_pretty_midi(piano_roll, **kwargs)
     pm.write(file_name)
