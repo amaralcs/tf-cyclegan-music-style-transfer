@@ -1,15 +1,38 @@
+"""
+    Train and save a CycleGAN model.
+
+    Usage
+    -----
+
+    To train a model on genres `a` and `b` using 2 bars and default hyperparameters:
+        python src/train.py \\
+            data/tfrecord/2_bars/genre_a \\
+            data/tfrecord/2_bars/genre_b \\
+            genre_a \\
+            genre_b
+
+"""
 import sys
 import os
 import time
 from argparse import ArgumentParser
 from yaml import safe_load, YAMLError
+from shutil import copy
+import logging
+
 
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, LearningRateScheduler
 
-from utils import load_data, gen_random_name
+from utils.utils import load_data
 from cyclegan import CycleGAN
 
+logging.basicConfig(
+    filename="training.log",
+    format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
+    level=logging.INFO,
+)
+logger = logging.getLogger("train_logger")
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"  # Suppress tensorflow logs
 
@@ -29,6 +52,8 @@ def parse_args(argv):
     args = ArgumentParser()
     args.add_argument("path_a", type=str, help="Path to tfrecord files of dataset A.")
     args.add_argument("path_b", type=str, help="Path to tfrecord files of dataset B.")
+    args.add_argument("genre_a", type=str, help="Name of genre A.")
+    args.add_argument("genre_b", type=str, help="Name of genre B.")
     args.add_argument(
         "--batch_size", default=32, type=int, help="Batch size used for training."
     )
@@ -182,10 +207,10 @@ def load_config(config_path):
     """
     with open(config_path, "r") as config_file:
         try:
-            model_config = safe_load(config_file)
+            config = safe_load(config_file)
         except YAMLError as e:
             raise e
-    return model_config["CycleGAN"]
+    return config["CycleGAN"], config["training"]
 
 
 def main(argv):
@@ -197,13 +222,11 @@ def main(argv):
     args = parse_args(argv)
     path_a = args.path_a
     path_b = args.path_b
+    genre_a = args.genre_a
+    genre_b = args.genre_b
     model_output = args.model_output
     config_path = args.config_path
     log_dir = args.log_dir
-
-    # debug path
-    path_a = "../data/cycleGAN/prepared_data/JC_C_cp/tfrecord"  # dummy dir with less data
-    path_b = "data/cycleGAN/prepared_data/JC_J_cp/tfrecord"
 
     learning_rate = args.learning_rate
     step = args.lr_step
@@ -212,37 +235,26 @@ def main(argv):
     epochs = args.epochs
     optimizer_params = dict(learning_rate=learning_rate, beta_1=beta_1)
 
-    # TODO: Handle this a bit more cleanly
-    genre_a = path_a.split("/")[1]
-    genre_b = path_b.split("/")[1]
-    if genre_a == path_a or genre_b == path_b:
-        raise Exception(
-            "There was an issue parsing the genre from the filename. Check the separator used."
-        )
-
+    logger.info("#" * 20 + f" Training {genre_a}2{genre_b} " + "#" * 20)
     os.makedirs(model_output, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
+    # Setup monitoring and callbacks
+    model_config, training_config = load_config(config_path)
+
+    epochs = training_config["epochs"]
+    batch_size = training_config["batch_size"]
 
     dataset = load_data(
         path_a, path_b, "train", batch_size=batch_size, cycle_length=500, shuffle=True
     )
 
-    # Setup monitoring and callbacks
-    model_config = load_config(config_path)
-    sigma_d = model_config["sigma_d"]
-    note_range = model_config["pitch_range"]
-    n_timesteps = model_config["n_timesteps"]
     model_info, callbacks = setup(
         log_dir,
         genre_a,
         genre_b,
         epochs,
-        batch_size,
         learning_rate,
         step,
-        sigma_d,
-        note_range,
-        n_timesteps,
     )
 
     # Setup model

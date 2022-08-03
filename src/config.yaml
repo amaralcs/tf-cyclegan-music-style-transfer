@@ -1,3 +1,7 @@
+training:
+    epochs: 30
+    batch_size: 32
+
 CycleGAN:
     pitch_range: 84                  # pitch range of piano roll
     n_timesteps: 64                  # number of time steps in piano roll
@@ -5,3 +9,6 @@ CycleGAN:
     n_units_generator: 64            # of generator filters in first conv layer
     l1_lambda: 10.0                  # weight on L1 term in objective
     sigma_d: 1                   # sigma of gaussian noise of discriminators
+
+preprocessing:
+    n_bars: 4

@@ -1,4 +1,37 @@
-from ast import parse
+"""
+    Evaluate the results of style transfer for a given model and genres.
+    This script runs evaluations for both A2B and B2A transfers.
+    
+    The path to the converted data should have the following structure:
+
+    converted/
+     |
+     |-- n_bars/
+     |   |
+     |   |-- model_name/
+     |   |   |
+     |   |   |-- A2B/
+     |   |   |  |
+     |   |   |  |-- file1.mid
+     |   |   |  |-- file2.mid
+     |   |   |  |-- ...
+     |   |   |  
+     |   |   |-- B2A/
+     |   |   |  |
+     |   |   |  |-- file1.mid
+     |   |   |  |-- file2.mid
+     |   |   |  |-- ...
+
+    Usage
+    -----
+    python src/evaluate.py \\
+        converted/4_bars \\
+        Pop \\
+        Jazz \\
+        Pop2Jazz \\
+        results/pop2jazz_4_bars
+
+"""
 import sys
 import os
 import re
@@ -9,7 +42,7 @@ import json
 import logging
 from argparse import ArgumentParser
 
-from eval_utils import (
+from utils.eval_utils import (
     eval_chroma_similarities,
     gen_histograms,
     time_pitch_diff_hist,
@@ -18,9 +51,12 @@ from eval_utils import (
     tonnetz_distance,
 )
 
+logging.basicConfig(
+    filename="evaluation.log",
+    format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
+    level=logging.INFO,
+)
 logger = logging.getLogger("evaluation_logger")
-logger.setLevel(logging.INFO)
-logger.addHandler(logging.StreamHandler())
 
 
 def parse_args(argv):
@@ -37,6 +73,8 @@ def parse_args(argv):
     """
     args = ArgumentParser()
     args.add_argument("fpath", type=str, help="Path to the converted songs.")
+    args.add_argument("genre_a", type=str, help="Name of genre A.")
+    args.add_argument("genre_b", type=str, help="Name of genre B.")
     args.add_argument("model", type=str, help="Name of model to evaluate.")
     args.add_argument("outpath", type=str, help="Path to save the results to.")
 
@@ -206,16 +244,16 @@ def main(argv):
     """Main function to compute evaluation metrics"""
     args = parse_args(argv)
     fpath = args.fpath
+    genre_a = args.genre_a
+    genre_b = args.genre_b
     model = args.model
     outpath = args.outpath
 
     chroma_args = dict(sampling_rate=12, window_size=24, stride=12, use_velocity=False)
     hist_kwargs = dict(max_time=4, bin_size=1 / 6, normed=True)
+    genre_a, genre_b = genre_a.replace(" ", "_"), genre_b.replace(" ", "_")
 
-    # Test args
-    # fpath = "converted"
-    # model = "CP_C2CP_P_30e_bs32_nr84_ts64_sd1_run_2022_06_25-19_24_32"
-    # outpath = "results"
+    logger.info("#" * 20 + f" Evaluating {genre_a}2{genre_b} " + "#" * 20)
 
     # load data
     base = "{}/{}/{}/*.mid*"
@@ -223,15 +261,6 @@ def main(argv):
     fpaths_B2A = glob(base.format(fpath, model, "B2A"))
     tup_a = load_converted_songs(fpaths_A2B)
     tup_b = load_converted_songs(fpaths_B2A)
-
-    # Get the names of the genres
-    pattern = r"^(.+?)2(.+?)_\d+e"
-    match = re.match(pattern, model)
-    genre_a, genre_b = match.group(1, 2)
-    genre_a = genre_a.replace(" ", "_")
-    genre_b = genre_b.replace(" ", "_")
-    logger.debug(f"\tgenre_a: {genre_a}")
-    logger.debug(f"\tgenre_b: {genre_b}")
 
     logger.info("Computing chroma_similarities...")
     results = {

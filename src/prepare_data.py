@@ -22,7 +22,7 @@
 
 import logging
 import os
-import errno
+from glob import glob
 import sys
 import numpy as np
 from argparse import ArgumentParser
@@ -33,11 +33,14 @@ from pypianoroll import Multitrack, Track, from_pretty_midi
 import pretty_midi
 
 
+logging.basicConfig(
+    filename="data_prep.log",
+    format="%(asctime)s : %(name)s [%(levelname)s] : %(message)s",
+    level=logging.INFO,
+)
 logger = logging.getLogger("preprocessing_logger")
-logger.setLevel(logging.INFO)
-logger.addHandler(logging.StreamHandler())
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"  # Suppress tensorflow logs
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress tensorflow logs
 
 
 def parse_args(argv):
@@ -61,6 +64,9 @@ def parse_args(argv):
     )
     args.add_argument(
         "genre", default="pop", type=str, help="Genre of the midis being processes."
+    )
+    args.add_argument(
+        "--n_bars", default=4, type=int, help="Number of bars to include."
     )
     args.add_argument(
         "--outpath",
@@ -122,21 +128,6 @@ def get_midi_path(root):
             if ".mid" in filename:
                 filepaths.append(os.path.join(dirpath, filename))
     return filepaths
-
-
-def make_sure_path_exists(path):
-    """Create all intermediate-level directories if the given path does not exist.
-
-    Parameters
-    ----------
-    path : str
-        Name of folder to create.
-    """
-    try:
-        os.makedirs(path)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise exception
 
 
 def get_midi_info(midi_obj):
@@ -267,9 +258,9 @@ def create_multitracks(filepath):
 
         return [midi_name, midi_info, merged]
 
-    except TypeError:
-        print(f"There was a type error when loading {midi_name}")
-        return None
+    except Exception:
+        logger.warning(f"There was a type error when loading {midi_name}, skipping it...")
+        return [midi_name, {"first_beat_time": 9999}, []]
 
 
 def filter_track(
@@ -320,7 +311,8 @@ def convert_and_clean_midis(midi_fpath, **filter_kwargs):
     # Create full path
 
     # First step: load midis, create multitracks of each and save them
-    midi_paths = get_midi_path(midi_fpath)
+    # midi_paths = get_midi_path(midi_fpath)
+    midi_paths = glob(os.path.join(midi_fpath, "*.mid*"))
     logger.info(f"Found {len(midi_paths)} midi files")
 
     midi_tracks = [create_multitracks(midi_path) for midi_path in midi_paths]
@@ -335,7 +327,7 @@ def convert_and_clean_midis(midi_fpath, **filter_kwargs):
     return filtered_tracks
 
 
-def shape_last_bar(piano_roll, last_bar_mode="remove"):
+def shape_last_bar(piano_roll, n_bars, last_bar_mode="remove"):
     """Utility function to handle the last bar of the song and reshape it.
 
     If `last_bar_mode` == "fill" then fill the remaining time steps with zeros.
@@ -345,30 +337,49 @@ def shape_last_bar(piano_roll, last_bar_mode="remove"):
     ----------
     piano_roll : np.array
         Piano roll array to trim
+    n_bars : int, Optional
+        Number of bars to use.
+
+    Note
+    ----
+    The original paper mentions using 16 as the sampling rate, however this function
+    is the only place where the "sampling rate" appears but it is not the true sampling rate.
+    Instead it is the number of timesteps after the midi file has been loaded.
+    To truly alter the sampling rate, one needs to modify the `Resolution` parameter of
+    `get_midi_info(pm)` in `create_multitrack`.
+
     """
-    if int(piano_roll.shape[0] % 64) != 0:
-        # Check that the number of time_steps is multiple of 4*16 (bars* required_time_steps)
+    required_time_steps = 16  # See note
+    timesteps = required_time_steps * n_bars
+    if int(piano_roll.shape[0] % timesteps) != 0:
+        # Check that the number of time_steps is multiple of (n_bars* required_time_steps)
         if last_bar_mode == "fill":
             piano_roll = np.concatenate(
-                (piano_roll, np.zeros((64 - piano_roll.shape[0] % 64, 128))), axis=0
+                (
+                    piano_roll,
+                    np.zeros((timesteps - piano_roll.shape[0] % timesteps, 128)),
+                ),
+                axis=0,
             )
 
         elif last_bar_mode == "remove":
             piano_roll = np.delete(
-                piano_roll, np.s_[-int(piano_roll.shape[0] % 64) :], axis=0
+                piano_roll, np.s_[-int(piano_roll.shape[0] % timesteps) :], axis=0
             )
 
-    # Reshape to (-1, n_bars * n_time_steps, midi_range (128 notes))
-    return piano_roll.reshape(-1, 64, 128)
+    # Reshape to (-1, timesteps, midi_range (128 notes))
+    return piano_roll.reshape(-1, timesteps, 128), timesteps
 
 
-def trim_midi_files(multitracks, clip_range=(24, 108), drop_phrases=True):
+def trim_midi_files(multitracks, n_bars, clip_range=(24, 108), drop_phrases=True):
     """
 
     Parameters
     ----------
     multitracks : List
         List containing the loaded and filtered tracks.
+    n_bars : int, Optional
+        Number of bars to use.
     clip_range : tuple(int, int), Optional
         2-Tuple containing indices of midi range to clip. Use None if no clipping is desired.
     drop_phrases : True, Optional
@@ -400,7 +411,7 @@ def trim_midi_files(multitracks, clip_range=(24, 108), drop_phrases=True):
                 tracks=[multitrack[idx] for idx in track_indices["Piano"]]
             ).blend()
 
-            shaped_multitrack = shape_last_bar(blended_multitrack)
+            shaped_multitrack, timesteps = shape_last_bar(blended_multitrack, n_bars)
 
             # Clip the range of the instruments to the indices given
             if clip_range:
@@ -408,14 +419,14 @@ def trim_midi_files(multitracks, clip_range=(24, 108), drop_phrases=True):
                 shaped_multitrack = shaped_multitrack[:, :, low:high]
 
             # Either keep all bars, or a single phrase
-            if drop_phrases and (shaped_multitrack.shape[0] % 4 != 0):
-                drop_bars_idx = int(shaped_multitrack.shape[0] % 4)
+            if drop_phrases and (shaped_multitrack.shape[0] % n_bars != 0):
+                drop_bars_idx = int(shaped_multitrack.shape[0] % n_bars)
                 shaped_multitrack = np.delete(
                     shaped_multitrack, np.s_[-drop_bars_idx:], axis=0
                 )
 
-            # Reshaped into (batchsize, 64, clipped_range, 1)
-            shaped_multitrack = shaped_multitrack.reshape(-1, 64, 84, 1)
+            # Reshaped into (batchsize, n_bars*16, clipped_range, 1)
+            shaped_multitrack = shaped_multitrack.reshape(-1, timesteps, 84, 1)
 
             trimmed_midis.append(shaped_multitrack)
         except Exception as err:
@@ -504,15 +515,17 @@ def main(argv):
     root_path = args.root_path
     outpath = args.outpath
     genre = args.genre
+    n_bars = args.n_bars
     test_ratio = args.test_ratio
     remove_velocity = args.remove_velocity
     clip_range = (args.clip_low, args.clip_high)
     drop_phrases = args.drop_phrases
 
+    logger.info("#" * 20 + f" Data prep: {genre} - n_bars: {n_bars} " + "#" * 20)
     midi_fpaths = os.path.join(root_path, genre)
     tracks = convert_and_clean_midis(midi_fpaths)
     trimmed_tracks = trim_midi_files(
-        tracks, clip_range=clip_range, drop_phrases=drop_phrases
+        tracks, n_bars=n_bars, clip_range=clip_range, drop_phrases=drop_phrases
     )
     train_set, test_set = train_test_split(tracks=trimmed_tracks, test_ratio=test_ratio)
 

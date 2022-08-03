@@ -7,6 +7,12 @@ trained_models/
 __pycache__/
 converted/
 bodhidharma/
-autoconvert.ps1
-autoeval.ps1
 cyclegan_eval.zip
+*.log
+*.ps1
+src/train_config.yaml
+imgs/
+results/
+src/*_single.py
+src/utils/npy_to_tfrecord.py
+single_song_prep.py
