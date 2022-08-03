@@ -15,3 +15,4 @@ imgs/
 results/
 src/*_single.py
 src/utils/npy_to_tfrecord.py
+single_song_prep.py
