@@ -9,7 +9,7 @@ Original repo: https://github.com/sumuzhao/CycleGAN-Music-Style-Transfer-Refacto
 
 
 ## Obtaining the data:
-TODO
+The datasets used can be downloaded from [Zenodo](https://zenodo.org/record/6959362).
 
 ## Preparing the data
 To prep the data, place a folder in this directory and create subdirectories labelled according to the genre of of music present in each subdirectory. Example:
