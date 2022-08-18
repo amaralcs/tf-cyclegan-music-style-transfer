@@ -34,8 +34,6 @@ python prepare_data.py datasets pop
 
 The resulting train and test files will be saved under `datasets/tfrecord`. 
 
-### Note:
-The script `npy_to_tfrecord.py` is an auxiliary script to convert already existing `.npy` files to tfrecords. It is not a necessary step but could be of use.
 
 ## Training
 
